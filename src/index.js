@@ -13,25 +13,33 @@ export default {
 
       // 🩵 Health check endpoint
       if (path === "/ping") {
-        return new Response(
-          JSON.stringify({
-            status: "ok",
-            service: "favicon-gateway",
-            version: "v1",
-            upstream: "favicon-fetcher",
-            timestamp: new Date().toISOString(),
-          }),
-          {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-            },
-          }
-        );
+        return jsonResponse({
+          status: "ok",
+          service: "favicon-gateway",
+          version: "v1",
+          upstream: "favicon-fetcher",
+          timestamp: new Date().toISOString()
+        });
       }
 
-      // 🔒 Private API configuration (from secrets)
+      // ✅ CORS preflight
+      if (request.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, X-RapidAPI-Key"
+          }
+        });
+      }
+
+      // ✅ Root path only
+      if (path !== "/" && path !== "") {
+        return jsonResponse({ error: "Not Found", path }, 404);
+      }
+
+      // 🔒 Private API configuration
       const upstream = "https://rapidapi-favicon-fetcher-worker.artxeweb.workers.dev";
       const privateKey = env.PRIVATE_API_KEY;
 
@@ -51,21 +59,17 @@ export default {
         `&size=${encodeURIComponent(size)}` +
         `&mode=${encodeURIComponent(mode)}`;
 
-      // --- Proxy the request to the private worker ---
-      const upstreamResp = await fetch(targetUrl, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-
-      // --- Return the upstream response transparently ---
+      // --- Proxy the request ---
+      const upstreamResp = await fetch(targetUrl, { headers: { Accept: "application/json" } });
       const contentType = upstreamResp.headers.get("content-type") || "application/json";
+
       return new Response(upstreamResp.body, {
         status: upstreamResp.status,
         headers: {
           "Content-Type": contentType,
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=86400",
-        },
+          "Cache-Control": "public, max-age=86400"
+        }
       });
     } catch (err) {
       return jsonResponse({ error: err.message }, 500);
@@ -73,13 +77,13 @@ export default {
   },
 };
 
-// --- Utility: consistent JSON responses ---
+// --- Utility function ---
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
+      "Access-Control-Allow-Origin": "*"
+    }
   });
 }
