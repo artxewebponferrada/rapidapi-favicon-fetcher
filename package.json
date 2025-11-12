@@ -1,0 +1,11 @@
+{
+  "name": "rapidapi-favicon-fetcher",
+  "version": "1.0.0",
+  "description": "Public API Gateway for Favicon Fetcher (for RapidAPI).",
+  "type": "module",
+  "scripts": {
+    "deploy": "npx wrangler deploy"
+  },
+  "author": "ArtxeWeb / Nexir",
+  "license": "MIT"
+}
