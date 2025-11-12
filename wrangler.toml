@@ -2,8 +2,4 @@ name = "rapidapi-favicon-fetcher"
 main = "src/index.js"
 compatibility_date = "2025-08-25"
 
-[compatibility_flags]
-global_fetch_strictly_public = true
-
-[vars]
-PRIVATE_API_KEY = "R4p1d4p1s00"
+compatibility_flags = ["global_fetch_strictly_public"]
