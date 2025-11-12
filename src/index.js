@@ -9,6 +9,27 @@ export default {
   async fetch(request, env, ctx) {
     try {
       const reqUrl = new URL(request.url);
+      const path = reqUrl.pathname;
+
+      // 🩵 Health check endpoint
+      if (path === "/ping") {
+        return new Response(
+          JSON.stringify({
+            status: "ok",
+            service: "favicon-gateway",
+            version: "v1",
+            upstream: "favicon-fetcher",
+            timestamp: new Date().toISOString(),
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          }
+        );
+      }
 
       // 🔒 Private API configuration (from secrets)
       const upstream = "https://rapidapi-favicon-fetcher-worker.artxeweb.workers.dev";
@@ -33,7 +54,7 @@ export default {
       // --- Proxy the request to the private worker ---
       const upstreamResp = await fetch(targetUrl, {
         method: "GET",
-        headers: { "Accept": "application/json" },
+        headers: { Accept: "application/json" },
       });
 
       // --- Return the upstream response transparently ---
@@ -52,6 +73,7 @@ export default {
   },
 };
 
+// --- Utility: consistent JSON responses ---
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj, null, 2), {
     status,
