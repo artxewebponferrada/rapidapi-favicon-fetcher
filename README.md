@@ -1,0 +1,2 @@
+# rapidapi-favicon-fetcher
+x
